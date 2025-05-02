@@ -111,5 +111,4 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 For questions or support, please contact:  
 Kathiresan P  
 kathiresanp80152@gmail.com  
-LinkedIn : www.linkedin.com/in/
-kathiresan-p-1703k
+LinkedIn : www.linkedin.com/in/kathiresan-p-1703k
