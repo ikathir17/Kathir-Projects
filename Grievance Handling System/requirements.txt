@@ -1,0 +1,17 @@
+Django==4.1.7
+django-crispy-forms==2.0
+crispy-bootstrap5==2023.10
+django-tables2==2.6.0
+django-filter==23.3
+django-widget-tweaks==1.5.0
+Pillow==10.1.0  # For image handling if attachments are supported
+python-decouple==3.8  # For environment variables
+django-cleanup==7.0.0  # For file cleanup
+django-allauth==0.58.2  # Optional for enhanced authentication
+django-captcha==0.1  # For CAPTCHA support
+gunicorn==21.2.0  # For production deployment
+psycopg2-binary==2.9.9  # For PostgreSQL support
+selenium==4.15.2  # For integration testing
+pytest==7.4.3  # For unit testing
+pytest-django==4.7.0
+whitenoise==6.6.0  # For static files in production
