@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Grievance Logs{% endblock %}
+
+{% block content %}
+
+
+    <!-- Logs Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Activity Logs</h3>
+            <br/>
+            <div class="header-actions">
+                <button type="button" class="btn btn-primary" onclick="exportTableToCSV()">
+                    <i class="fas fa-download"></i> Export CSV
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table logs-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Grievance ID</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td class="timestamp-cell">
+                                <div class="timestamp">
+                                    <span class="date">{{ log.timestamp|date:"M d, Y" }}</span>
+                                    <span class="time">{{ log.timestamp|time:"H:i" }}</span>
+                                </div>
+                            </td>
+                            <td class="user-cell">
+                                <div class="user-info">
+                                    <span class="username">{{ log.user.get_full_name }}</span>
+                                    <span class="role">{{ log.user.get_role_display }}</span>
+                                </div>
+                            </td>
+                            <td class="action-cell">
+                                <span class="action-badge action-{{ log.action|lower }}">{{ log.get_action_display }}</span>
+                            </td>
+                            <td class="grievance-cell">
+                                {% if log.grievance %}
+                                <a href="{% url 'grievance_detail' log.grievance.id %}" class="grievance-link">
+                                    #{{ log.grievance.id }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="details-cell">
+                                <div class="details-content">
+                                    {{ log.details|default:"-" }}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No logs found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-primary">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+                {% endif %}
+                <span class="pagination-info">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn btn-primary">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    font-size: 2rem;
+    color: var(--primary);
+}
+
+.stat-content h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text);
+}
+
+.stat-content p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background: var(--dark-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+}
+
+.card-header h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.25rem;
+}
+
+.logs-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+}
+
+.logs-table th {
+    background-color: var(--dark-bg);
+    color: var(--text);
+    font-weight: 500;
+    padding: 1rem;
+    white-space: nowrap;
+}
+
+.logs-table td {
+    padding: 1rem;
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logs-table tr {
+    transition: all 0.2s ease;
+}
+
+.logs-table tr:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.timestamp-cell {
+    min-width: 150px;
+}
+
+.timestamp {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.timestamp .date {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.timestamp .time {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.user-cell {
+    min-width: 200px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-info .username {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.user-info .role {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.action-cell {
+    min-width: 120px;
+}
+
+.action-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.action-created {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.action-updated {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.action-deleted {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.action-status_changed {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.grievance-cell {
+    min-width: 100px;
+}
+
+.grievance-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.grievance-link:hover {
+    text-decoration: underline;
+}
+
+.details-cell {
+    min-width: 300px;
+}
+
+.details-content {
+    color: var(--text);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.text-center {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-secondary);
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .logs-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .logs-table th,
+    .logs-table td {
+        white-space: nowrap;
+    }
+}
+</style>
+
+<script>
+function exportTableToCSV() {
+    const table = document.querySelector('.logs-table');
+    if (!table) return;
+
+    // Get headers
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        headers.push(th.textContent.trim());
+    });
+
+    // Get rows
+    const rows = [];
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => {
+            // Get the actual text content, ignoring any HTML elements
+            const text = td.textContent.trim();
+            row.push(text);
+        });
+        rows.push(row);
+    });
+
+    // Create CSV content
+    let csvContent = headers.join(',') + '\n';
+    rows.forEach(row => {
+        const escapedRow = row.map(cell => {
+            if (cell.toString().includes(',') || cell.toString().includes('"') || cell.toString().includes('\n')) {
+                return `"${cell.toString().replace(/"/g, '""')}"`;
+            }
+            return cell;
+        });
+        csvContent += escapedRow.join(',') + '\n';
+    });
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const date = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `grievance_logs_${date}.csv`);
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+{% endblock %}

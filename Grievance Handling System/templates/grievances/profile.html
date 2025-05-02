@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Profile{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <i class="fas fa-user-circle fa-4x icon-primary"></i>
+        </div>
+        <div class="profile-info">
+            <h2>{{ user.get_full_name }}</h2>
+            <p class="text-muted">{{ user.email }}</p>
+            <span class="role-badge">{{ user.role }}</span>
+        </div>
+    </div>
+
+    <div class="profile-details">
+        <div class="detail-section">
+            <h3>Account Information</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="label">Username</span>
+                    <span class="value">{{ user.username }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Date Joined</span>
+                    <span class="value">{{ user.date_joined|date:"F j, Y" }}</span>
+                </div>
+                {% if user.department %}
+                <div class="detail-item">
+                    <span class="label">Department</span>
+                    <span class="value">{{ user.department.name }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .profile-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: var(--card-bg);
+    }
+
+    .profile-info h2 {
+        margin-bottom: 0.5rem;
+    }
+
+    .text-muted {
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .detail-section {
+        margin-bottom: 2rem;
+    }
+
+    .detail-section h3 {
+        margin-bottom: 1rem;
+        color: var(--text);
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .detail-item .label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .detail-item .value {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
