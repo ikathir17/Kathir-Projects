@@ -107,8 +107,5 @@ gunicorn --bind 0.0.0.0:8000 grievance_system.wsgi
 ## Contributing
 Contributions are welcome! Please fork the repository and submit a pull request.
 
-## Contact
-For questions or support, please contact:  
-Kathiresan P  
-kathiresanp80152@gmail.com  
+## Follow me
 LinkedIn : www.linkedin.com/in/kathiresan-p-1703k
