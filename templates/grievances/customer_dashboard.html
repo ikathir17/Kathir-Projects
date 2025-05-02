@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Customer Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Grievances</h3>
+        <div class="value">{{ grievances.count }}</div>
+        <div class="trend">
+            <i class="fas fa-chart-line text-primary"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <h3>In Progress</h3>
+        <div class="value">{{ in_progress_count }}</div>
+        <div class="trend">
+            <i class="fas fa-spinner text-warning"></i>
+        </div>
+    </div>
+    <div class="stat-card">
+        <h3>Resolved</h3>
+        <div class="value">{{ resolved_count }}</div>
+        <div class="trend">
+            <i class="fas fa-check-circle text-success"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Submit New Grievance -->
+<div class="card">
+    <div class="card-header">
+        <h3>Submit New Grievance</h3>
+        <a href="{% url 'grievance_logs' %}" class="btn btn-primary">
+            <i class="fas fa-history"></i> View Logs
+        </a>
+    </div>
+    <form method="post" id="grievanceForm" class="card-body">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {% if field.name == 'issue_type' %}
+                    <select name="{{ field.name }}" class="form-select">
+                        {% for value, label in field.field.choices %}
+                            <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+                {% if field.errors %}
+                    <div class="error-text">{{ field.errors|striptags }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Submit Grievance
+        </button>
+    </form>
+</div>
+
+<!-- My Grievances -->
+<div class="card">
+    <div class="card-header">
+        <h3>My Grievances</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Department</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for grievance in grievances %}
+                <tr>
+                    <td>#{{ grievance.id }}</td>
+                    <td>{{ grievance.department.name|default:"-" }}</td>
+                    <td>{{ grievance.description|truncatewords:10 }}</td>
+                    <td>
+                        <span class="status-badge status-{{ grievance.status|lower }}">
+                            {{ grievance.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ grievance.assigned_to.get_full_name|default:"-" }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'grievance_detail' grievance.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if grievance.status == 'RESOLVED' and not grievance.feedbacks.exists %}
+                            <a href="{% url 'submit_feedback' grievance.id %}" class="btn btn-warning btn-sm" title="Submit Feedback">
+                                <i class="fas fa-star"></i>
+                            </a>
+                            {% endif %}
+                            {% if grievance.status in 'RECEIVED,IN_PROGRESS' %}
+                            <form method="post" action="{% url 'delete_grievance' grievance.id %}" class="delete-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" data-grievance-id="{{ grievance.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No grievances found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    /* Remove underline from View Logs button */
+    .card-header .btn {
+        text-decoration: none;
+    }
+
+    /* Style form inputs */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+        font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        background-color: var(--card-bg);
+        color: var(--text);
+        transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .error-text {
+        color: var(--danger);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    .form-control {
+        background-color: var(--card-bg);
+        color: var(--text);
+        border: 2px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:hover {
+        border-color: var(--primary);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .btn-warning {
+        background-color: #fbbf24;
+        color: #1f2937;
+        border: none;
+    }
+    .btn-warning:hover {
+        background-color: #f59e0b;
+        transform: translateY(-1px);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .stat-card h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: var(--text);
+        margin-bottom: 1rem;
+    }
+
+    .stat-card .value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card .trend {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 2rem;
+    }
+
+    .stat-card:nth-child(1) {
+        border-left: 4px solid var(--icon-primary);
+    }
+
+    .stat-card:nth-child(2) {
+        border-left: 4px solid var(--icon-warning);
+    }
+
+    .stat-card:nth-child(3) {
+        border-left: 4px solid var(--icon-success);
+    }
+
+    /* Add subtle hover effect */
+    .stat-card:hover {
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Add these styles for icon visibility */
+    .trend i {
+        opacity: 1;
+        color: inherit;
+    }
+
+    .text-primary {
+        color: var(--primary) !important;
+    }
+
+    .text-warning {
+        color: var(--warning) !important;
+    }
+
+    .text-success {
+        color: var(--success) !important;
+    }
+
+    /* Add these styles for action button icons */
+    .btn-primary i {
+        color: white !important;
+    }
+
+    .btn-primary:hover i {
+        color: white !important;
+    }
+
+    .btn-danger i {
+        color: white !important;
+    }
+
+    .btn-danger:hover i {
+        color: white !important;
+    }
+
+    .btn-warning i {
+        color: #1f2937 !important;
+    }
+
+    .btn-warning:hover i {
+        color: #1f2937 !important;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .btn-danger {
+        background-color: var(--danger);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: #dc2626;
+    }
+
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-received {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .status-in_progress {
+        background-color: rgba(234, 179, 8, 0.1);
+        color: #eab308;
+    }
+
+    .status-resolved {
+        background-color: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+
+    .status-rejected {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .status-escalated {
+        background-color: rgba(156, 39, 176, 0.1);
+        color: #9C27B0;
+    }
+
+    @media (max-width: 768px) {
+        .action-buttons {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+</style>
+
+<script>
+// Enhanced delete confirmation with status check
+function confirmDelete(event, button) {
+    event.preventDefault();
+    const grievanceId = button.getAttribute('data-grievance-id');
+    const statusBadge = button.closest('tr').querySelector('.status-badge');
+    const status = statusBadge.textContent.trim();
+    
+    if (status === 'Resolved' || status === 'Rejected') {
+        alert('Cannot delete resolved or rejected grievances');
+        return false;
+    }
+    
+    if (confirm('Are you sure you want to delete this grievance?')) {
+        button.closest('form').submit();
+    }
+    return false;
+}
+
+// Auto-renumber grievances after deletion
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const button = this.querySelector('button[type="submit"]');
+            if (!confirmDelete(e, button)) return;
+            
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Accept': 'application/json',
+                    },
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Remove the deleted grievance row
+                    this.closest('tr').remove();
+                    
+                    // Show success message using toast
+                    const toast = document.createElement('div');
+                    toast.className = 'toast show';
+                    toast.innerHTML = `
+                        <div class="toast-message success">
+                            Grievance deleted successfully
+                        </div>
+                    `;
+                    document.body.appendChild(toast);
+                    
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 5000);
+                } else {
+                    alert(result.error || 'Failed to delete grievance');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the grievance');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

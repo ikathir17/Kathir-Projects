@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Grievance #{{ grievance.id }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="grievance-header">
+            <h3>Grievance Details</h3>
+            <span class="status-badge status-{{ grievance.status|lower }}">
+                {{ grievance.get_status_display }}
+            </span>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Type</div>
+                <div class="info-value">{{ grievance.get_issue_type_display }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Submitted by</div>
+                <div class="info-value">{{ grievance.user.get_full_name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Submitted on</div>
+                <div class="info-value">{{ grievance.created_at|date:"M d, Y H:i" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Last updated</div>
+                <div class="info-value">{{ grievance.updated_at|date:"M d, Y H:i" }}</div>
+            </div>
+            {% if grievance.assigned_to %}
+            <div class="info-item">
+                <div class="info-label">Assigned to</div>
+                <div class="info-value">{{ grievance.assigned_to.get_full_name }}</div>
+            </div>
+            {% endif %}
+            {% if grievance.department %}
+            <div class="info-item">
+                <div class="info-label">Department</div>
+                <div class="info-value">{{ grievance.department.name }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="description-section">
+            <h4>Description</h4>
+            <div class="description-content">
+                {{ grievance.description }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if request.user.role == 'ADMIN' or request.user.role == 'EMPLOYEE' and request.user == grievance.assigned_to %}
+<div class="card">
+    <div class="card-header">
+        <h3>Update Status</h3>
+    </div>
+    <br/>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <form method="post" class="status-form">
+                {% csrf_token %}
+                <input type="hidden" name="grievance_id" value="{{ grievance.id }}">
+                <select name="status" class="status-select" onchange="this.form.submit()">
+                    {% for status in grievance.Status.choices %}
+                    <option value="{{ status.0 }}" {% if grievance.status == status.0 %}selected{% endif %}>
+                        {{ status.1 }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            <br/>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Update Status
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h3>Update History</h3>
+    </div>
+    <div class="card-body">
+        <div class="timeline">
+            {% for update in updates %}
+            <div class="timeline-item">
+                <div class="timeline-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <span class="timeline-author">{{ update.updated_by.get_full_name }}</span>
+                        <span class="timeline-date">{{ update.created_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                    <div class="timeline-body">
+                        <p>Status changed to <span class="status-badge status-{{ update.status|lower }}">{{ update.get_status_display }}</span></p>
+                        {% if update.comment %}
+                            <p class="timeline-comment">{{ update.comment }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-history"></i>
+                <p>No updates yet</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.status-form {
+    display: inline-block;
+    margin-left: 0.5rem;
+}
+
+.status-select {
+    display: inline-block;
+    width: auto;
+    min-width: 150px;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--card-bg);
+    color: var(--text);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.status-select:hover {
+    border-color: var(--primary);
+}
+
+.status-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.status-select option {
+    background-color: var(--card-bg);
+    color: var(--text);
+    padding: 0.5rem;
+}
+
+.status-select option:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .status-form {
+        margin-left: 0;
+        margin-top: 0.5rem;
+        width: 100%;
+    }
+
+    .status-select {
+        width: 100%;
+    }
+}
+.grievance-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.info-value {
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.description-section {
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.description-section h4 {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.description-content {
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.timeline {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.timeline-icon {
+    width: 2rem;
+    height: 2rem;
+    background-color: var(--dark-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.timeline-content {
+    flex: 1;
+    background-color: var(--dark-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-author {
+    font-weight: 500;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.timeline-body {
+    color: var(--text);
+}
+
+.timeline-comment {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
