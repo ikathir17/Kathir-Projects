@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Submit Feedback{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>Submit Feedback for Grievance #{{ grievance.id }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="grievance-details">
+            <p><strong>Department:</strong> {{ grievance.department.name }}</p>
+            <p><strong>Assigned To:</strong> {{ grievance.assigned_to.get_full_name }}</p>
+            <p><strong>Description:</strong> {{ grievance.description }}</p>
+        </div>
+        <form method="post" class="feedback-form">
+            {% csrf_token %}
+            <div class="rating-container">
+                <label>Rating</label>
+                <div class="star-rating">
+                    {% for i in "54321" %}
+                    <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+                    <label for="star{{ i }}" class="star">
+                        <i class="fas fa-star"></i>
+                    </label>
+                    {% endfor %}
+                </div>
+                <div class="rating-value" id="rating-value">Select a rating</div>
+            </div>
+            <div class="form-group">
+                <label for="comment">Comment (Optional)</label>
+                <textarea id="comment" name="comment" class="form-control highlight-input" rows="4" placeholder="Share your experience..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Submit Feedback
+                </button>
+                <a href="{% url 'customer_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.grievance-details {
+    background: var(--dark-bg);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.grievance-details p {
+    margin-bottom: 0.75rem;
+}
+
+.grievance-details p:last-child {
+    margin-bottom: 0;
+}
+
+.feedback-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.rating-container {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    justify-content: center;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    cursor: pointer;
+    font-size: 2rem;
+    color: var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input:checked ~ label {
+    color: #fbbf24;
+}
+
+.rating-value {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    min-height: 1.5rem;
+}
+
+.star-rating input:checked + label ~ .rating-value {
+    color: #fbbf24;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.highlight-input {
+    background-color: var(--card-bg);
+    color: var(--text);
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.highlight-input:hover {
+    border-color: var(--primary);
+}
+
+.highlight-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.star-rating input');
+    const ratingValue = document.getElementById('rating-value');
+    const ratingTexts = {
+        '5': 'Excellent',
+        '4': 'Good',
+        '3': 'Average',
+        '2': 'Poor',
+        '1': 'Very Poor'
+    };
+
+    stars.forEach(star => {
+        star.addEventListener('change', function() {
+            const value = this.value;
+            ratingValue.textContent = ratingTexts[value];
+            ratingValue.style.color = '#fbbf24';
+        });
+
+        star.addEventListener('mouseover', function() {
+            const value = this.value;
+            ratingValue.textContent = ratingTexts[value];
+            ratingValue.style.color = '#fbbf24';
+        });
+
+        star.addEventListener('mouseout', function() {
+            const checkedStar = document.querySelector('.star-rating input:checked');
+            if (checkedStar) {
+                ratingValue.textContent = ratingTexts[checkedStar.value];
+                ratingValue.style.color = '#fbbf24';
+            } else {
+                ratingValue.textContent = 'Select a rating';
+                ratingValue.style.color = 'var(--text-secondary)';
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 
