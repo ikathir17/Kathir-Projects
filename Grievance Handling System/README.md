@@ -92,7 +92,7 @@ gunicorn --bind 0.0.0.0:8000 grievance_system.wsgi
   - Escalate unresolved issues
 
 ### Customer Dashboard
-- **Access**: `****/customer-dashboard`
+- **Access**: `http://127.0.0.1:8000/customer-dashboard`
 - **Functions**:
   - Submit new grievances
   - Track grievance status
